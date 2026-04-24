@@ -1,12 +1,11 @@
 package com.buildsol.wordplaza.navigation
 
-import org.example.notable.components.systemTimeInMillis
 import kotlin.reflect.KClass
 
 
 
 sealed class NavCommand(
-    val timestamp: Long = systemTimeInMillis(),
+    val timestamp: Long = System.currentTimeMillis(),
 ) {
     class Navigate(
         val destination: GTCAppRoute,
@@ -14,23 +13,23 @@ sealed class NavCommand(
         val popUpTo: GTCAppRoute? = null,
         val popUpToClass: KClass<*>? = null,
         val popUpToInclusive: Boolean = false,
-        timestamp: Long = systemTimeInMillis(),
+        timestamp: Long = System.currentTimeMillis(),
     ) : NavCommand(timestamp)
 
     class PopToRoute(
         val destination: GTCAppRoute,
         val inclusive: Boolean,
-        timestamp: Long = systemTimeInMillis(),
+        timestamp: Long = System.currentTimeMillis(),
     ): NavCommand(timestamp)
 
     class PopToRouteClass(
         val destination: KClass<*>,
         val inclusive: Boolean,
-        timestamp: Long = systemTimeInMillis(),
+        timestamp: Long = System.currentTimeMillis(),
     ): NavCommand(timestamp)
 
     class PopUp(
-        timestamp: Long = systemTimeInMillis(),
+        timestamp: Long = System.currentTimeMillis(),
     ): NavCommand(timestamp)
 
 

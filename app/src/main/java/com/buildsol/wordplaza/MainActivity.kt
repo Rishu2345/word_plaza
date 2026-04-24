@@ -79,7 +79,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.buildsol.wordplaza.ui.theme.WordPlazaTheme
+import com.buildsol.wordplaza.ui.theme.AppTheme
 import kotlinx.coroutines.launch
 
 private enum class PlazaScreen(val label: String, val icon: String) {
@@ -123,7 +123,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            WordPlazaTheme(dynamicColor = false) {
+            AppTheme {
                 WordPlazaApp()
             }
         }
@@ -752,7 +752,7 @@ private val samplePosts = listOf(
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
 private fun WordPlazaPreview() {
-    WordPlazaTheme(dynamicColor = false) {
-        WordPlazaApp()
-    }
+    AppTheme() {
+         WordPlazaApp()
+     }
 }

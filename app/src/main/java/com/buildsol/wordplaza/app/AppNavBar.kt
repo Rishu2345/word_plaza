@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,8 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.example.notable.app.AppUiState
-import org.example.notable.images.Image
-import org.example.notable.images.imagePainter
 
 
 @Composable
@@ -54,10 +51,7 @@ fun AppNavigationBar(
                         contentColor = MaterialTheme.colorScheme.onPrimary
                     )) {
 
-                    Icon(
-                        painter = imagePainter(Image.DARK_MODE_MOON),
-                        contentDescription = null
-                    )
+
 
                     Spacer(Modifier.width(8.dp))
                     Text("Previous", fontSize = 20.sp)
@@ -77,10 +71,7 @@ fun AppNavigationBar(
                     Text(" Next ", fontSize = 20.sp)
                     Spacer(Modifier.width(8.dp))
 
-                    Icon(
-                        painter = imagePainter(Image.ADD),
-                        contentDescription = null
-                    )
+
 
                 }
             }
