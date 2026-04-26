@@ -25,15 +25,13 @@ data class SecondScreen(
 }
 
 @Serializable
-data class NoteEditorRoute(
-    val noteId: String,
-    val workspaceId: String
-): GTCAppRoute {
+object HomeScreenRoute : GTCAppRoute
 
-    val id = noteId
-    val wkId = workspaceId
-    companion object {
-        fun create(noteId: String, workspaceId: String) = NoteEditorRoute(noteId = noteId, workspaceId =  workspaceId)
-    }
+@Serializable
+object SearchScreenRoute : GTCAppRoute
 
-}
+@Serializable
+object ProfileScreenRoute : GTCAppRoute
+
+@Serializable
+object CreatePostRoute :  GTCAppRoute

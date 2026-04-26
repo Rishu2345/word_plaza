@@ -35,22 +35,18 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.buildsol.wordplaza.model.Word
 import com.buildsol.wordplaza.ui.theme.AppTheme
 
 @Composable
 fun WordBox(
-    word:String,
-    meaning:String,
-    synonyms:List<String>,
-    antonyms:List<String>,
-    egUse:String,
-    saved:Boolean ,
-    like:Int,
-    dislike:Int,
-    pronunciation:String? = null,
-    onExpandedClick:(Boolean) -> Unit = {}
+    word: Word,
+    onExpandedClick:(Boolean) -> Unit = {},
+    expanded:Boolean = false,
+    onLikeClick: () -> Unit = {},
+    onDislikeClick: () -> Unit = {},
+    onBookmarkClick: () -> Unit = {}
 ){
-    var expanded = false
     val colors = MaterialTheme.colorScheme
     val wordColor by animateColorAsState(targetValue = if(expanded) colors.primary else colors.onSurfaceVariant)
     val rotation by animateFloatAsState(targetValue = if(expanded) 0f else 180f )
@@ -71,12 +67,12 @@ fun WordBox(
         ){
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)){
                 Text(
-                    text = word,
+                    text = word.word,
                     style = MaterialTheme.typography.titleLarge,
                     color = wordColor
                 )
 
-                pronunciation?.let{
+                word.pronunciation?.let{
                     Text(
                         text = it,
                         style = MaterialTheme.typography.labelSmall,
@@ -86,7 +82,7 @@ fun WordBox(
             }
 
             IconButton(
-                onClick = { expanded = !expanded }
+                onClick = { onExpandedClick(!expanded)}
             ){
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowUp,
@@ -117,7 +113,7 @@ fun WordBox(
                 )
 
                 Text(
-                    text = meaning,
+                    text = word.meaning,
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSurface
                 )
@@ -137,7 +133,7 @@ fun WordBox(
                         color = colors.secondary
                     )
                     Text(
-                        text = antonyms.joinToString(", "),
+                        text = word.antonyms.joinToString(", "),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.onSurface
                     )
@@ -150,7 +146,7 @@ fun WordBox(
                         color = colors.tertiary
                     )
                     Text(
-                        text = synonyms.joinToString(", "),
+                        text = word.synonyms.joinToString(", "),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.onSurface
                     )
@@ -180,7 +176,7 @@ fun WordBox(
                     .padding(10.dp)
             ) {
                 Text(
-                    text = egUse,
+                    text = word.egUse,
                     style = MaterialTheme.typography.bodyMedium,
                     fontStyle = FontStyle.Italic,
                     color = colors.onSurfaceVariant
@@ -222,7 +218,7 @@ fun WordBox(
                         tint = colors.onSurfaceVariant
                     )
                     Text(
-                        text = formatCount(like),
+                        text = formatCount(word.like),
                         color = colors.onSurfaceVariant
                     )
 
@@ -234,15 +230,15 @@ fun WordBox(
                         tint = colors.onSurfaceVariant
                     )
                     Text(
-                        text = formatCount(dislike),
+                        text = formatCount(word.dislike),
                         color = colors.onSurfaceVariant
                     )
                 }
 
                 Icon(
-                    imageVector = if (saved) Icons.Default.Bookmark else Icons.Outlined.Bookmark,
+                    imageVector = if (word.saved) Icons.Default.Bookmark else Icons.Outlined.Bookmark,
                     contentDescription = null,
-                    tint = if (saved) colors.primary else colors.onSurfaceVariant // ✅ nice touch
+                    tint = if (word.saved) colors.primary else colors.onSurfaceVariant // ✅ nice touch
                 )
             }
         }
@@ -262,15 +258,18 @@ private fun formatCount(value: Int): String {
 fun WordBoxPreview() {
     AppTheme(true) {
         WordBox(
-            word = "Serendipity",
-            meaning = "The occurrence of events by chance in a happy or beneficial way.",
-            synonyms = listOf("fluke", "chance", "fortune"),
-            antonyms = listOf("misfortune", "bad luck"),
-            egUse = "Finding that book was pure serendipity.",
-            saved = true,
-            like = 120,
-            dislike = 10,
-            pronunciation = "/ˌserənˈdipədē/",
+            word = Word(
+                id = "1",
+                word = "Serendipity",
+                meaning = "The occurrence of events by chance in a happy or beneficial way.",
+                synonyms = listOf("fluke", "chance", "fortune"),
+                antonyms = listOf("misfortune", "bad luck"),
+                egUse = "Finding that book was pure serendipity.",
+                saved = true,
+                like = 120,
+                dislike = 10,
+                pronunciation = "/ˌserənˈdipədē/"
+            ),
             onExpandedClick = {}
         )
     }

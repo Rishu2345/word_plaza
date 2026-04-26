@@ -11,15 +11,29 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.buildsol.wordplaza.model.Word
+import com.buildsol.wordplaza.viewModel.homeScreenViewModel.HomeScreenViewModel
+
+@Composable
+fun HomeScreen(viewModel: HomeScreenViewModel){
+    HomeScreen(
+        wordOfTheDay = viewModel.wordOfTheDay(),
+        wordFeed = viewModel.wordFeed(),
+        onWordClick = viewModel::onWordClick,
+        onBookmarkClick = viewModel::onBookmarkClick,
+        onLikeClick = viewModel::onLikeClick,
+        onDislikeClick = viewModel::onDislikeClick
+    )
+}
 
 @OptIn(ExperimentalFlexBoxApi::class)
 @Composable
 fun HomeScreen(
     wordOfTheDay: Word,
     onWordClick: (Word) -> Unit,
-    onBookmarkClick: (Word) -> Unit,
-    onLikeClick: (Word) -> Unit,
-    onDislikeClick: (Word) -> Unit,
+    onBookmarkClick: (String) -> Unit,
+    onLikeClick: (String) -> Unit,
+    onDislikeClick: (String) -> Unit,
     wordFeed: List<Word>,
 ) {
 
@@ -40,22 +54,15 @@ fun HomeScreen(
 
         // Word of the day card (big one)
         item {
-
+            WordBox(
+                word = wordOfTheDay,
+                expanded = false
+            )
         }
 
         // Feed
         items(wordFeed) { word ->
-
+            WordBox(word)
         }
     }
 }
-
-data class Word(
-    val id :String,
-    val word:String,
-    val meaning:String,
-    val synonyms:List<String>,
-    val antonyms:List<String>,
-    val pronunciation:String? = null,
-    val egUse:String
-)

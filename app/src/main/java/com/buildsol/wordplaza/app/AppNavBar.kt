@@ -1,24 +1,25 @@
 package com.buildsol.wordplaza.app
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.NoteAdd
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import org.example.notable.app.AppUiState
+import com.buildsol.wordplaza.model.AppUiState
+import com.buildsol.wordplaza.model.NavItem
+import com.buildsol.wordplaza.navigation.CreatePostRoute
+import com.buildsol.wordplaza.navigation.HomeScreenRoute
+import com.buildsol.wordplaza.navigation.ProfileScreenRoute
+import com.buildsol.wordplaza.navigation.SearchScreenRoute
 
 
 @Composable
@@ -26,57 +27,52 @@ fun AppNavigationBar(
     appUiState: AppUiState,
     modifier: Modifier = Modifier
 ) {
-    if(appUiState.hideBottomNavigation) return
+    if (appUiState.hideBottomNavigation) return
 
+    val items = listOf(
+        NavItem(HomeScreenRoute, "Feed", Icons.Default.Home),
+        NavItem(CreatePostRoute, "Add Word", Icons.AutoMirrored.Filled.NoteAdd),
+        NavItem(SearchScreenRoute, "Search", Icons.Default.Search),
+        NavItem(ProfileScreenRoute, "Profile", Icons.Default.Person)
+    )
 
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.primaryContainer)
-            .navigationBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        contentAlignment = Alignment.Center
+    NavigationBar(
+        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 4.dp
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
 
-            if (!appUiState.hidePreviousButton) {
-                Button(onClick = appUiState.onPreviousButtonClick,
-                    enabled = appUiState.previousButtonEnable,
-                    colors = ButtonDefaults.buttonColors().copy(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )) {
+        items.forEach { item ->
 
+            val isSelected = appUiState.currentRoute == item.route
 
+            NavigationBarItem(
+                selected = isSelected,
+                onClick = { appUiState.onNavigate(item.route) },
 
-                    Spacer(Modifier.width(8.dp))
-                    Text("Previous", fontSize = 20.sp)
-                }
-            }
-            Spacer(modifier.weight(1f))
-
-            if (!appUiState.hideNextButton) {
-                Button(
-                    onClick = appUiState.onNextButtonClick,
-                    enabled = appUiState.nextButtonEnable,
-                    colors = ButtonDefaults.buttonColors().copy(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
+                icon = {
+                    Icon(
+                        imageVector = item.icon,
+                        contentDescription = item.label
                     )
-                ) {
-                    Text(" Next ", fontSize = 20.sp)
-                    Spacer(Modifier.width(8.dp))
+                },
 
+                label = {
+                    Text(item.label)
+                },
 
+                alwaysShowLabel = true,
 
-                }
-            }
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                    selectedTextColor = MaterialTheme.colorScheme.primary,
+
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+
+                    indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                )
+            )
         }
     }
 }
-
-

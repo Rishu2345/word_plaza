@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
-class AppViewModel(
+open class AppViewModel(
     private val savedStateHandle: SavedStateHandle
 ): ViewModel(){
     protected val _navCommandFlow = MutableSharedFlow<NavCommand>(
