@@ -2,15 +2,21 @@ package com.buildsol.wordplaza.viewModel
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import com.buildsol.wordplaza.model.AppUiState
 import com.buildsol.wordplaza.navigation.NavCommand
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
 open class AppViewModel(
     private val savedStateHandle: SavedStateHandle
 ): ViewModel(){
+
+    val _appUiState = MutableStateFlow(AppUiState())
+    val appUiState= _appUiState.asSharedFlow()
     protected val _navCommandFlow = MutableSharedFlow<NavCommand>(
         replay = 1,
         extraBufferCapacity = 0,

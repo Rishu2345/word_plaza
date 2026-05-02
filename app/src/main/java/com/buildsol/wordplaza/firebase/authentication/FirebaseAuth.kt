@@ -12,9 +12,14 @@ import com.buildsol.wordplaza.R
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
-import com.google.firebase.auth.FirebaseAuth
+import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.GoogleAuthProvider
 import com.buildsol.wordplaza.model.GoogleSignInResult
+import com.google.firebase.auth.AuthResult
+import com.google.firebase.auth.FirebaseAuth as GoogleFirebaseAuth
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 class FirebaseAuth(private val context: Context){
 
@@ -23,7 +28,7 @@ class FirebaseAuth(private val context: Context){
         Log.d("signIn","Creating sign In Request")
         val googleIdOption = GetGoogleIdOption.Builder()
             .setFilterByAuthorizedAccounts(false)
-            .setServerClientId(context.getString(R.string.app_name)) // we have to add the api key here
+            .setServerClientId(context.getString(R.string.google_web_client_id))
             .setAutoSelectEnabled(false)
             .build()
 
@@ -37,17 +42,18 @@ class FirebaseAuth(private val context: Context){
             Log.d("signIn","Signing In")
             val request = createSignInRequest()
             val result = credentialManager.getCredential(context,request)
-            val user = handleSignIn(result)
-            user
-
+            handleSignIn(result)
         } catch(e: GetCredentialException){
             Log.e("signIn","Error Signing In",e)
+            null
+        } catch(e: Exception){
+            Log.e("signIn","Unexpected Error Signing In",e)
             null
         }
 
     }
 
-    private fun handleSignIn(result: GetCredentialResponse):GoogleSignInResult?{
+    private suspend fun handleSignIn(result: GetCredentialResponse):GoogleSignInResult?{
         return when(val credential = result.credential){
             is CustomCredential -> {
                 if(credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL){
@@ -56,22 +62,23 @@ class FirebaseAuth(private val context: Context){
                         val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
                         val idToken = googleIdTokenCredential.idToken
                         val firebaseCredential = GoogleAuthProvider.getCredential(idToken,null)
-                        FirebaseAuth.getInstance().signInWithCredential(firebaseCredential)
-                            .addOnCompleteListener { task ->
-                                if(task.isSuccessful){
-                                    Log.d("GoogleSignIn","Firebase Authentication Successful")
-                                }else{
-                                    Log.e("GoogleSignIn","Firebase Authentication Failed",task.exception)
-                                }
-                            }
                         return GoogleSignInResult(
-                            googleIdTokenCredential.id,
-                            googleIdTokenCredential.displayName,
-                            googleIdTokenCredential.idToken,
-                            googleIdTokenCredential.profilePictureUri.toString()
+                            idToken = idToken,
+                            displayName = googleIdTokenCredential.displayName,
+                            id = googleIdTokenCredential.id,
+                            profilePictureUrl = googleIdTokenCredential.profilePictureUri?.toString(),
+                            firebaseUid = GoogleFirebaseAuth.getInstance()
+                                .signInWithCredential(firebaseCredential)
+                                .await()
+                                .user
+                                ?.uid,
+                            email = googleIdTokenCredential.id
                         )
                     } catch (e: GoogleIdTokenParsingException) {
                         Log.e("GoogleSignIn", "Invalid Google ID Token", e)
+                        null
+                    } catch (e: Exception) {
+                        Log.e("GoogleSignIn", "Firebase Authentication Failed", e)
                         null
                     }
                 } else {
@@ -87,7 +94,7 @@ class FirebaseAuth(private val context: Context){
     }
     suspend fun signOut() {
         try {
-            FirebaseAuth.getInstance().signOut()
+            GoogleFirebaseAuth.getInstance().signOut()
 
             val request = ClearCredentialStateRequest()
             credentialManager.clearCredentialState(request)
@@ -99,5 +106,17 @@ class FirebaseAuth(private val context: Context){
         }
     }
 
-}
+    private suspend fun Task<AuthResult>.await(): AuthResult =
+        suspendCancellableCoroutine { continuation ->
+            addOnSuccessListener { result ->
+                continuation.resume(result)
+            }
+            addOnFailureListener { exception ->
+                continuation.resumeWithException(exception)
+            }
+            addOnCanceledListener {
+                continuation.cancel()
+            }
+        }
 
+}

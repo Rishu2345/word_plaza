@@ -79,7 +79,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.buildsol.wordplaza.firebase.authentication.FirebaseAuth as WordPlazaFirebaseAuth
+import com.buildsol.wordplaza.firebase.firestore.FireStore
+import com.buildsol.wordplaza.model.Word
 import com.buildsol.wordplaza.ui.theme.AppTheme
+import com.buildsol.wordplaza.view.login.LoginScreen
+import com.buildsol.wordplaza.view.home.AddWordBottomSheet
+import com.buildsol.wordplaza.view.profileChange.ProfileUpdate
+import com.google.firebase.auth.FirebaseAuth as GoogleFirebaseAuth
 import kotlinx.coroutines.launch
 
 private enum class PlazaScreen(val label: String, val icon: String) {
@@ -124,7 +131,55 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             AppTheme {
-                WordPlazaApp()
+                val authManager = remember { WordPlazaFirebaseAuth(this@MainActivity) }
+                val fireStore = remember { FireStore() }
+                val scope = rememberCoroutineScope()
+                var isSignedIn by rememberSaveable {
+                    mutableStateOf(GoogleFirebaseAuth.getInstance().currentUser != null)
+                }
+                var isSigningIn by rememberSaveable { mutableStateOf(false) }
+                var loginError by rememberSaveable { mutableStateOf<String?>(null) }
+
+                LaunchedEffect(isSignedIn) {
+                    if (isSignedIn) {
+                        GoogleFirebaseAuth.getInstance().currentUser?.uid?.let { userId ->
+                            runCatching {
+                                fireStore.updateLastSeen(userId)
+                            }
+                        }
+                    }
+                }
+
+                if (isSignedIn) {
+                    WordPlazaApp()
+                } else {
+                    LoginScreen(
+                        isLoading = isSigningIn,
+                        errorMessage = loginError,
+                        onSignInWithGoogle = {
+                            if (!isSigningIn) {
+                                scope.launch {
+                                    isSigningIn = true
+                                    loginError = null
+
+                                    try {
+                                        val signInResult = authManager.signIn()
+                                        if (signInResult?.firebaseUid.isNullOrBlank()) {
+                                            loginError = "Google sign-in did not complete. Please try again."
+                                        } else {
+                                            fireStore.initializeUserData(signInResult!!)
+                                            isSignedIn = true
+                                        }
+                                    } catch (exception: Exception) {
+                                        loginError = exception.message ?: "Unable to sign in right now."
+                                    } finally {
+                                        isSigningIn = false
+                                    }
+                                }
+                            }
+                        }
+                    )
+                }
             }
         }
     }
@@ -133,6 +188,16 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun WordPlazaApp() {
     var selectedScreen by rememberSaveable { mutableStateOf(PlazaScreen.Feed) }
+    var showAddWordSheet by rememberSaveable { mutableStateOf(false) }
+    var isPostingWord by rememberSaveable { mutableStateOf(false) }
+    var addWordError by rememberSaveable { mutableStateOf<String?>(null) }
+    val fireStore = remember { FireStore() }
+    val scope = rememberCoroutineScope()
+
+    fun openAddWordSheet() {
+        addWordError = null
+        showAddWordSheet = true
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -140,7 +205,7 @@ private fun WordPlazaApp() {
         floatingActionButton = {
             if (selectedScreen != PlazaScreen.Add) {
                 FloatingActionButton(
-                    onClick = { selectedScreen = PlazaScreen.Add },
+                    onClick = { openAddWordSheet() },
                     containerColor = Color.Transparent,
                     contentColor = Color.White,
                     shape = RoundedCornerShape(18.dp),
@@ -153,7 +218,16 @@ private fun WordPlazaApp() {
             }
         },
         bottomBar = {
-            PlazaBottomBar(selectedScreen = selectedScreen, onSelected = { selectedScreen = it })
+            PlazaBottomBar(
+                selectedScreen = selectedScreen,
+                onSelected = { screen ->
+                    if (screen == PlazaScreen.Add) {
+                        openAddWordSheet()
+                    } else {
+                        selectedScreen = screen
+                    }
+                }
+            )
         }
     ) { innerPadding ->
         Box(
@@ -165,10 +239,47 @@ private fun WordPlazaApp() {
             when (selectedScreen) {
                 PlazaScreen.Feed -> FeedScreen()
                 PlazaScreen.Add -> AddPostScreen()
-                PlazaScreen.Profile -> ProfileScreen()
+                PlazaScreen.Profile -> ProfileUpdate()
             }
         }
     }
+
+    if (showAddWordSheet) {
+        AddWordBottomSheet(
+            isPosting = isPostingWord,
+            errorMessage = addWordError,
+            onDismiss = {
+                if (!isPostingWord) {
+                    showAddWordSheet = false
+                    addWordError = null
+                }
+            },
+            onPostWord = { word ->
+                if (!isPostingWord) {
+                    scope.launch {
+                        isPostingWord = true
+                        addWordError = null
+
+                        try {
+                            publishWordFromSheet(fireStore, word)
+                            showAddWordSheet = false
+                        } catch (exception: Exception) {
+                            addWordError = exception.message ?: "Unable to post this word right now."
+                        } finally {
+                            isPostingWord = false
+                        }
+                    }
+                }
+            }
+        )
+    }
+}
+
+private suspend fun publishWordFromSheet(fireStore: FireStore, word: Word) {
+    val userId = GoogleFirebaseAuth.getInstance().currentUser?.uid
+        ?: error("Please sign in before posting a word.")
+
+    fireStore.publishWordPost(userId, word)
 }
 
 @Composable

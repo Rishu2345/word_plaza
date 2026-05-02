@@ -4,12 +4,13 @@ import com.buildsol.wordplaza.navigation.GTCAppRoute
 import com.buildsol.wordplaza.navigation.HomeScreenRoute
 
 data class AppUiState(
-    val hideBottomNavigation: Boolean = false,
-    val hideTopBar:Boolean = false,
-    val onNotificationClick: () -> Unit = {},
-    val onProfileClick: () -> Unit = {},
-    val userName:String? = null,
-    val scrollOffSet: Float = 0f,
-    val currentRoute: GTCAppRoute = HomeScreenRoute,
-    val onNavigate: (GTCAppRoute) -> Unit = {}
+    var hideBottomNavigation: Boolean = false,
+    var hideTopBar:Boolean = false,
+    var onNotificationClick: () -> Unit = {},
+    var onProfileClick: () -> Unit = {},
+    var userName:String? = null,
+    var scrollOffSet: Float = 0f,
+    var currentRoute: GTCAppRoute = HomeScreenRoute,
+    var onNavigate: (GTCAppRoute) -> Unit = {},
+    var isLoading : Boolean = false
 )
