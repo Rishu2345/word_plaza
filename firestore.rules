@@ -1,0 +1,111 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isUser(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function postCountersOnly() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['likeCount', 'dislikeCount', 'saveCount', 'updatedAt']);
+    }
+
+    function wordCountersOnly() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['postCount', 'updatedAt']);
+    }
+
+    function userCountersOnly() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['followerCount', 'followingCount', 'postCount', 'postedWordIds', 'lastSeen']);
+    }
+
+    function countsAreNonNegative() {
+      return (!('likeCount' in request.resource.data) || request.resource.data.likeCount >= 0)
+        && (!('dislikeCount' in request.resource.data) || request.resource.data.dislikeCount >= 0)
+        && (!('saveCount' in request.resource.data) || request.resource.data.saveCount >= 0)
+        && (!('postCount' in request.resource.data) || request.resource.data.postCount >= 0)
+        && (!('followerCount' in request.resource.data) || request.resource.data.followerCount >= 0)
+        && (!('followingCount' in request.resource.data) || request.resource.data.followingCount >= 0);
+    }
+
+    match /users/{userId} {
+      allow read: if true;
+      allow create: if isUser(userId) && request.resource.data.id == userId && countsAreNonNegative();
+      allow update: if countsAreNonNegative()
+        && ((isUser(userId) && request.resource.data.id == userId) || userCountersOnly());
+      allow delete: if isUser(userId);
+
+      match /savedPosts/{postId} {
+        allow read, delete: if isUser(userId);
+        allow create, update: if isUser(userId)
+          && request.resource.data.userId == userId
+          && request.resource.data.postId == postId;
+      }
+
+      match /following/{targetUserId} {
+        allow read: if true;
+        allow create: if isUser(userId)
+          && request.resource.data.ownerUserId == userId
+          && request.resource.data.relatedUserId == targetUserId;
+        allow update: if false;
+        allow delete: if isUser(userId);
+      }
+
+      match /followers/{sourceUserId} {
+        allow read: if true;
+        allow create: if isUser(sourceUserId)
+          && request.resource.data.ownerUserId == userId
+          && request.resource.data.relatedUserId == sourceUserId;
+        allow update: if false;
+        allow delete: if isUser(sourceUserId);
+      }
+    }
+
+    match /words/{wordId} {
+      allow read: if true;
+      allow create: if signedIn()
+        && request.resource.data.id == wordId
+        && request.resource.data.createdByUserId == request.auth.uid
+        && countsAreNonNegative();
+      allow update: if signedIn() && countsAreNonNegative()
+        && (resource.data.createdByUserId == request.auth.uid || wordCountersOnly());
+      allow delete: if signedIn() && resource.data.createdByUserId == request.auth.uid;
+    }
+
+    match /posts/{postId} {
+      allow read: if resource.data.visibility == 'public'
+        || (signedIn() && resource.data.authorId == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.id == postId
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.visibility == 'public'
+        && request.resource.data.likeCount == 0
+        && request.resource.data.dislikeCount == 0
+        && request.resource.data.saveCount == 0;
+      allow update: if signedIn() && countsAreNonNegative()
+        && ((resource.data.authorId == request.auth.uid && request.resource.data.authorId == resource.data.authorId)
+          || postCountersOnly());
+      allow delete: if signedIn() && resource.data.authorId == request.auth.uid;
+
+      match /reactions/{userId} {
+        allow read: if isUser(userId);
+        allow create, update: if isUser(userId)
+          && request.resource.data.userId == userId
+          && request.resource.data.postId == postId
+          && request.resource.data.type in ['like', 'dislike'];
+        allow delete: if isUser(userId);
+      }
+    }
+
+    match /appMeta/{documentId} {
+      allow read: if true;
+      allow write: if signedIn();
+    }
+  }
+}

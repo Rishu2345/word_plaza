@@ -1,5 +1,6 @@
 package com.buildsol.wordplaza.firebase.authentication
 
+import android.app.Activity
 import android.content.Context
 import android.util.Log
 import androidx.credentials.ClearCredentialStateRequest
@@ -37,11 +38,11 @@ class FirebaseAuth(private val context: Context){
             .build()
     }
 
-    suspend fun signIn():GoogleSignInResult?{
+    suspend fun signIn(activity : Activity):GoogleSignInResult?{
         return try{
             Log.d("signIn","Signing In")
             val request = createSignInRequest()
-            val result = credentialManager.getCredential(context,request)
+            val result = credentialManager.getCredential(activity,request)
             handleSignIn(result)
         } catch(e: GetCredentialException){
             Log.e("signIn","Error Signing In",e)

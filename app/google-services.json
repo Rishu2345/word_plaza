@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "492643733767",
+    "project_id": "wordplaza1234",
+    "storage_bucket": "wordplaza1234.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:492643733767:android:4b36c81688f7207416f5a2",
+        "android_client_info": {
+          "package_name": "com.buildsol.wordplaza"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDM62cCHetFHE-_HcE9ds2SedQKI5h47Ak"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

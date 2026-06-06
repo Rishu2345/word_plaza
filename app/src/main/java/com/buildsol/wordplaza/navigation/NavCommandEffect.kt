@@ -12,7 +12,6 @@ fun NavCommandEffect(
     LaunchedEffect(navHostController) {
         navCommandFlow.collect { navCommand ->
             navHostController.onCollectNavCommand(navCommand)
-
         }
     }
 }

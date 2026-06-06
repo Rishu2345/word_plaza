@@ -1,20 +1,6 @@
 package com.buildsol.wordplaza.view.onboarding
 
-/*
- * Copyright 2026 Kyriakos Georgiopoulos
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
-    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+
 
 import android.graphics.RenderEffect
 import android.graphics.RuntimeShader
@@ -85,6 +71,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.buildsol.wordplaza.R
+import com.buildsol.wordplaza.viewModel.onboardingViewModels.OnboardingViewModel
 import kotlinx.coroutines.launch
 import org.intellij.lang.annotations.Language
 import kotlin.math.PI
@@ -96,6 +83,15 @@ private val BOTTOM_PADDING = 140.dp
 private const val SPLIT_POINT = 0.65f
 private const val VISIBILITY_START = 0.2f
 private val CONTENT_BOTTOM_PADDING = BOTTOM_PADDING + BUTTON_SIZE
+
+
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+@Composable
+fun OnboardingScreen(
+    viewModel : OnboardingViewModel
+) {
+    OnboardingScreens(onFinished = viewModel::moveToProfileUpdateScreen)
+}
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @OptIn(ExperimentalFoundationApi::class)
@@ -862,7 +858,7 @@ data class OnboardingPage(
 val onboardingPages = listOf(
     OnboardingPage(
         title = "Local news\nstories",
-        imageRes = R.drawable.ic_launcher_foreground,
+        imageRes = R.drawable.onboarding_first,
         bgColor = Color(0xFF1441CC),
         buttonColor = Color(0xFFF19EBC),
         textGradient = Brush.linearGradient(
@@ -875,7 +871,7 @@ val onboardingPages = listOf(
     ),
     OnboardingPage(
         title = "Choose your\ninterests",
-        imageRes = R.drawable.ic_launcher_foreground,
+        imageRes = R.drawable.onboarding_second,
         bgColor = Color(0xFFF19EBC),
         buttonColor = Color.White,
         textGradient = Brush.linearGradient(
@@ -888,7 +884,7 @@ val onboardingPages = listOf(
     ),
     OnboardingPage(
         title = "Drag and\ndrop to move",
-        imageRes = R.drawable.ic_launcher_foreground,
+        imageRes = R.drawable.onboarding_third,
         bgColor = Color.White,
         buttonColor = Color(0xFF1D7373),
         textColor = Color.Black,
@@ -901,7 +897,7 @@ val onboardingPages = listOf(
     ),
     OnboardingPage(
         title = "Ready to\nexplore",
-        imageRes = R.drawable.ic_launcher_foreground,
+        imageRes = R.drawable.onboarding_forth,
         bgColor = Color(0xFF1D7373),
         buttonColor = Color(0xFFF49D6A),
         textGradient = Brush.linearGradient(

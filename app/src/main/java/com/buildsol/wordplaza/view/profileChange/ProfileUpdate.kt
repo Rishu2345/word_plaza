@@ -57,11 +57,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
+import com.buildsol.wordplaza.viewModel.profileUpdateViewModel.ProfileUpdateViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileUpdate(
-    viewModel: ProfileUpdateViewModel = viewModel()
+    viewModel: ProfileUpdateViewModel
 ) {
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
