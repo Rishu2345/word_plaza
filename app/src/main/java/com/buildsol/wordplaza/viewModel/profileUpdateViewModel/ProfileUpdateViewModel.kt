@@ -3,10 +3,14 @@ package com.buildsol.wordplaza.viewModel.profileUpdateViewModel
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
+import android.provider.ContactsContract
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.buildsol.wordplaza.firebase.firestore.FireStore
+import com.buildsol.wordplaza.navigation.HomeScreenRoute
+import com.buildsol.wordplaza.navigation.LoginScreenRoute
+import com.buildsol.wordplaza.navigation.NavCommand
 import com.buildsol.wordplaza.view.profileChange.ProfileImageProcessor
 import com.buildsol.wordplaza.view.profileChange.ProfileImageStorage
 import com.buildsol.wordplaza.view.profileChange.ProfileUpdateState
@@ -14,20 +18,23 @@ import com.buildsol.wordplaza.viewModel.AppViewModel
 import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
+import com.timestampcamera.intalyx.db.DataStoreHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import org.swaggy.hotelpanel.db.DataStoreKey
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 class ProfileUpdateViewModel(
     private val auth: FirebaseAuth,
     private val fireStore: FireStore,
-    private val imageProcessor: ProfileImageProcessor,
-    private val imageStorage: ProfileImageStorage,
+    private val dataStoreHelper: DataStoreHelper,
     savedStateHandle: SavedStateHandle
 ) : AppViewModel(savedStateHandle = savedStateHandle) {
     private val _uiState = MutableStateFlow(ProfileUpdateState())
@@ -47,34 +54,23 @@ class ProfileUpdateViewModel(
                         errorMessage = "Please sign in before updating your profile."
                     )
                 }
+                navigateToLoginPage()
                 return@launch
             }
 
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
-            try {
-                val userProfile = fireStore.getUserData(firebaseUser.uid)
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        displayName = userProfile?.displayName.orEmpty()
-                            .ifBlank { firebaseUser.displayName.orEmpty() },
-                        profilePictureUrl = userProfile?.profilePictureUrl.orEmpty()
-                            .ifBlank { firebaseUser.photoUrl?.toString().orEmpty() },
-                        selectedGalleryUri = null,
-                        selectedCameraBitmap = null
-                    )
-                }
-            } catch (exception: Exception) {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        displayName = firebaseUser.displayName.orEmpty(),
-                        profilePictureUrl = firebaseUser.photoUrl?.toString().orEmpty(),
-                        errorMessage = exception.message ?: "Unable to load your profile."
-                    )
-                }
+            val displayName = dataStoreHelper.getString(DataStoreKey.USER_NAME).first()
+            val profilePictureUrl = dataStoreHelper.getString(DataStoreKey.USER_IMAGE).first()
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    displayName = displayName,
+                    profilePictureUrl = profilePictureUrl,
+
+                )
             }
+            _uiState.update { it.copy(isLoading = false) }
         }
     }
 
@@ -88,27 +84,6 @@ class ProfileUpdateViewModel(
         }
     }
 
-    fun onGalleryImageSelected(uri: Uri) {
-        _uiState.update {
-            it.copy(
-                selectedGalleryUri = uri,
-                selectedCameraBitmap = null,
-                errorMessage = null,
-                successMessage = null
-            )
-        }
-    }
-
-    fun onCameraImageCaptured(bitmap: Bitmap) {
-        _uiState.update {
-            it.copy(
-                selectedGalleryUri = null,
-                selectedCameraBitmap = bitmap,
-                errorMessage = null,
-                successMessage = null
-            )
-        }
-    }
 
     fun saveProfile(context: Context) {
         val currentState = _uiState.value
@@ -117,6 +92,7 @@ class ProfileUpdateViewModel(
 
         if (firebaseUser == null) {
             _uiState.update { it.copy(errorMessage = "Please sign in before saving your profile.") }
+            navigateToLoginPage()
             return
         }
 
@@ -129,10 +105,9 @@ class ProfileUpdateViewModel(
             _uiState.update {
                 it.copy(isSaving = true, errorMessage = null, successMessage = null)
             }
+            val imageUrl = "" // todo
 
             try {
-                val imageUrl = uploadSelectedImageIfNeeded(context, firebaseUser.uid, currentState)
-                    ?: currentState.profilePictureUrl
 
                 fireStore.updateUserProfile(
                     userId = firebaseUser.uid,
@@ -146,8 +121,6 @@ class ProfileUpdateViewModel(
                         isSaving = false,
                         displayName = displayName,
                         profilePictureUrl = imageUrl,
-                        selectedGalleryUri = null,
-                        selectedCameraBitmap = null,
                         successMessage = "Profile updated."
                     )
                 }
@@ -162,24 +135,9 @@ class ProfileUpdateViewModel(
         }
     }
 
-    private suspend fun uploadSelectedImageIfNeeded(
-        context: Context,
-        userId: String,
-        state: ProfileUpdateState
-    ): String? {
-        val imageBytes = when {
-            state.selectedCameraBitmap != null -> imageProcessor.bytesFromBitmap(state.selectedCameraBitmap)
-            state.selectedGalleryUri != null -> imageProcessor.bytesFromUri(context, state.selectedGalleryUri)
-            else -> null
-        } ?: return null
-
-        return imageStorage.uploadProfileImage(userId, imageBytes)
-    }
-
     private suspend fun updateFirebaseAuthProfile(displayName: String, profilePictureUrl: String) {
         val profileUpdates = UserProfileChangeRequest.Builder()
             .setDisplayName(displayName)
-            .setPhotoUri(profilePictureUrl.takeIf { it.isNotBlank() }?.let(Uri::parse))
             .build()
 
         auth.currentUser?.updateProfile(profileUpdates)?.await()
@@ -196,4 +154,24 @@ class ProfileUpdateViewModel(
             continuation.cancel()
         }
     }
+
+    //move to login page
+    fun navigateToLoginPage(){
+        _navCommandFlow.tryEmit(
+            NavCommand.Navigate(
+                destination = LoginScreenRoute
+            )
+        )
+    }
+
+    //move to home page
+    fun navigateToHomePage(){
+        _navCommandFlow.tryEmit(
+            NavCommand.Navigate(
+                destination = HomeScreenRoute
+            )
+        )
+    }
+
+
 }

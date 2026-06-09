@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -19,6 +20,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -51,51 +55,52 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import com.buildsol.wordplaza.R
 import com.buildsol.wordplaza.viewModel.profileUpdateViewModel.ProfileUpdateViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+
+
 @Composable
 fun ProfileUpdate(
     viewModel: ProfileUpdateViewModel
+){
+    val uiState by viewModel.uiState.collectAsState()
+    ProfileUpdate(
+        state = uiState,
+        onAvatarSelected = viewModel::onAvatarSelected,
+        onDisplayNameChange = viewModel::onDisplayNameChange,
+    )
+}
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProfileUpdate(
+    state: ProfileUpdateState,
+    onAvatarSelected: (Int) -> Unit,
+    toggleAvtarSheet: (Boolean) -> Unit,
+    onDisplayNameChange: (String) -> Unit,
+    onSaveClick: () -> Unit,
 ) {
-    val state by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
-    var showImageSheet by remember { mutableStateOf(false) }
 
-    val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia()
-    ) { uri ->
-        if (uri != null) {
-            viewModel.onGalleryImageSelected(uri)
-        }
-        showImageSheet = false
-    }
 
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicturePreview()
-    ) { bitmap ->
-        if (bitmap != null) {
-            viewModel.onCameraImageCaptured(bitmap)
-        }
-        showImageSheet = false
-    }
 
-    if (showImageSheet) {
-        ModalBottomSheet(onDismissRequest = { showImageSheet = false }) {
+    if (state.showAvtarSheet) {
+        ModalBottomSheet(onDismissRequest = { toggleAvtarSheet(false) } ) {
             ImageSourceSheet(
-                onGalleryClick = {
-                    galleryLauncher.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                    )
-                },
-                onCameraClick = {
-                    cameraLauncher.launch(null)
+                selectedAvatarId = state.selectedAvatarId,
+                avatars = state.avatars,
+                onAvatarSelected = { avatar ->
+                    onAvatarSelected(avatar.id)
+                    toggleAvtarSheet(false)
                 }
             )
         }
@@ -112,13 +117,14 @@ fun ProfileUpdate(
         } else {
             ProfileUpdateContent(
                 state = state,
-                onImageEditClick = { showImageSheet = true },
-                onNameChange = viewModel::onDisplayNameChange,
-                onSaveClick = { viewModel.saveProfile(context.applicationContext) }
+                onImageEditClick = { toggleAvtarSheet(true) },
+                onNameChange = onDisplayNameChange,
+                onSaveClick = onSaveClick
             )
         }
     }
 }
+
 
 @Composable
 private fun ProfileUpdateContent(
@@ -223,33 +229,25 @@ private fun EditableAvatar(
                 .border(4.dp, MaterialTheme.colorScheme.surface, CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            when {
-                state.selectedCameraBitmap != null -> {
+            if(state.selectedAvatarId != null) {
                     Image(
-                        bitmap = state.selectedCameraBitmap.asImageBitmap(),
-                        contentDescription = "Selected profile picture",
+                        painter = painterResource(state.selectedAvatarId),
+                        contentDescription = "Selected Avtar",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
                     )
-                }
-
-                state.selectedGalleryUri != null || state.profilePictureUrl.isNotBlank() -> {
-                    AsyncImage(
-                        model = state.selectedGalleryUri ?: state.profilePictureUrl,
-                        contentDescription = "Profile picture",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-
-                else -> {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(64.dp)
-                    )
-                }
+            }else {
+                AsyncImage(
+                    model  = ImageRequest.Builder(LocalContext.current)
+                        .data(state.profilePictureUrl)
+                        .crossfade(true)
+                        .build(),
+                    placeholder = painterResource(R.drawable.onboarding_first),
+                    error = painterResource(R.drawable.onboarding_first),
+                    contentDescription = "Profile picture",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
             }
         }
 
@@ -272,8 +270,9 @@ private fun EditableAvatar(
 
 @Composable
 private fun ImageSourceSheet(
-    onGalleryClick: () -> Unit,
-    onCameraClick: () -> Unit
+    selectedAvatarId: Int?,
+    avatars: List<Avatar>,
+    onAvatarSelected: (Avatar) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -281,28 +280,101 @@ private fun ImageSourceSheet(
             .padding(bottom = 24.dp)
     ) {
         Text(
-            text = "Profile picture",
+            text = "Choose Avatar",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
         )
-        ListItem(
-            headlineContent = { Text("Choose from gallery") },
-            leadingContent = {
-                Icon(imageVector = Icons.Default.PhotoLibrary, contentDescription = null)
-            },
+
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(3),
             modifier = Modifier
-                .padding(horizontal = 8.dp)
-                .clickable(onClick = onGalleryClick)
-        )
-        ListItem(
-            headlineContent = { Text("Use camera") },
-            leadingContent = {
-                Icon(imageVector = Icons.Default.PhotoCamera, contentDescription = null)
-            },
-            modifier = Modifier
-                .padding(horizontal = 8.dp)
-                .clickable(onClick = onCameraClick)
+                .fillMaxWidth()
+                .height(320.dp),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(
+                items = avatars,
+                key = { it.id }
+            ) { avatar ->
+
+                val isSelected = avatar.id == selectedAvatarId
+
+                AvatarItem(
+                    avatar = avatar,
+                    isSelected = isSelected,
+                    onClick = {
+                        onAvatarSelected(avatar)
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AvatarItem(
+    avatar: Avatar,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.clickable(onClick = onClick)
+    ) {
+
+        Box(
+            contentAlignment = Alignment.BottomEnd
+        ) {
+            Image(
+                painter = painterResource(avatar.imageRes),
+                contentDescription = avatar.title,
+                modifier = Modifier
+                    .size(90.dp)
+                    .clip(CircleShape)
+                    .border(
+                        width = if (isSelected) 3.dp else 1.dp,
+                        color = if (isSelected)
+                            MaterialTheme.colorScheme.primary
+                        else
+                            MaterialTheme.colorScheme.outline,
+                        shape = CircleShape
+                    ),
+                contentScale = ContentScale.Crop
+            )
+
+            if (isSelected) {
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Text(
+            text = avatar.title,
+            style = MaterialTheme.typography.labelSmall,
+            maxLines = 1
         )
     }
 }
+
+data class Avatar(
+    val id: Int,
+    @DrawableRes val imageRes: Int,
+    val title: String
+)

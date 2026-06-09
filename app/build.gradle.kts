@@ -78,4 +78,6 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.material.icons.extended)
     implementation(platform(libs.androidx.compose.bom.v20260401))
+
+    implementation(libs.androidx.datastore.preferences.core)
 }

@@ -25,12 +25,6 @@ val appKoinModule = module {
     single{
         FirebaseAuth(get())
     }
-    single {
-        ProfileImageStorage()
-    }
-    single {
-        ProfileImageProcessor()
-    }
 
     single {
         FireStore()

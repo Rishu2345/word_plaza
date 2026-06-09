@@ -6,6 +6,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.buildsol.wordplaza.firebase.authentication.FirebaseAuth
 import com.buildsol.wordplaza.firebase.firestore.FireStore
+import com.buildsol.wordplaza.navigation.HomeScreenRoute
 import com.buildsol.wordplaza.navigation.NavCommand
 import com.buildsol.wordplaza.navigation.ProfileUpdateRoute
 import com.buildsol.wordplaza.viewModel.AppViewModel
@@ -64,7 +65,7 @@ class LoginViewModel(
         if(name.isNullOrBlank() || profilePic.isNullOrBlank()) return
         _navCommandFlow.tryEmit(
             NavCommand.Navigate(
-                destination = ProfileUpdateRoute.create(name, profilePic),
+                destination = HomeScreenRoute,
             )
         )
     }
