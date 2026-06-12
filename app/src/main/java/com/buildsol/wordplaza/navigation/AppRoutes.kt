@@ -21,20 +21,8 @@ object ProfileScreenRoute : GTCAppRoute
 object CreatePostRoute :  GTCAppRoute
 
 @Serializable
-data class ProfileUpdateRoute(
-    val userName:String,
-    val profilePic:String
-) : GTCAppRoute {
-    @Transient
-    val name = userName
+object ProfileUpdateRoute : GTCAppRoute
 
-    @Transient
-    val profile = profilePic
-
-    companion object{
-        fun create(userName:String,profilePic:String) = ProfileUpdateRoute(userName,profilePic)
-    }
-}
 
 @Serializable
 object LoginScreenRoute : GTCAppRoute

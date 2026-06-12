@@ -40,6 +40,7 @@ class FireStore(
             email = signInResult.email.orEmpty().ifBlank { existingUser?.email.orEmpty() },
             profilePictureUrl = signInResult.profilePictureUrl.orEmpty()
                 .ifBlank { existingUser?.profilePictureUrl.orEmpty() },
+            avatarId = existingUser?.avatarId ?: "",
             bio = existingUser?.bio.orEmpty(),
             followerCount = existingUser?.followerCount ?: 0,
             followingCount = existingUser?.followingCount ?: 0,
@@ -75,14 +76,14 @@ class FireStore(
             .await()
     }
 
-    suspend fun updateUserProfile(userId: String, displayName: String, profilePictureUrl: String) {
+    suspend fun updateUserProfile(userId: String, displayName: String, avatarId: String) {
         require(userId.isNotBlank()) { "User id is required to update profile." }
 
         usersCollection.document(userId)
             .update(
                 mapOf(
                     DISPLAY_NAME_FIELD to displayName,
-                    PROFILE_PICTURE_URL_FIELD to profilePictureUrl,
+                    AVATAR_ID_FIELD to avatarId,
                     USERNAME_FIELD to usernameFrom(displayName, userId)
                 )
             )
@@ -508,7 +509,6 @@ class FireStore(
 
     companion object {
         private const val DEFAULT_FEED_LIMIT = 30L
-
         private const val USERS_COLLECTION = "users"
         private const val WORDS_COLLECTION = "words"
         private const val POSTS_COLLECTION = "posts"
@@ -518,7 +518,6 @@ class FireStore(
         private const val FOLLOWERS_COLLECTION = "followers"
         private const val APP_META_COLLECTION = "appMeta"
         private const val APP_META_DOCUMENT = "wordPlaza"
-
         private const val AUTHOR_ID_FIELD = "authorId"
         private const val CREATED_AT_FIELD = "createdAt"
         private const val DISLIKE_COUNT_FIELD = "dislikeCount"
@@ -529,7 +528,7 @@ class FireStore(
         private const val LIKE_COUNT_FIELD = "likeCount"
         private const val POST_COUNT_FIELD = "postCount"
         private const val POSTED_WORD_IDS_FIELD = "postedWordIds"
-        private const val PROFILE_PICTURE_URL_FIELD = "profilePictureUrl"
+        private const val AVATAR_ID_FIELD = "avatarId"
         private const val SAVE_COUNT_FIELD = "saveCount"
         private const val TYPE_FIELD = "type"
         private const val UPDATED_AT_FIELD = "updatedAt"

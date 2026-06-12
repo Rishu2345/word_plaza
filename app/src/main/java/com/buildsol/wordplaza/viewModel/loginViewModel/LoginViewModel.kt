@@ -65,7 +65,7 @@ class LoginViewModel(
         if(name.isNullOrBlank() || profilePic.isNullOrBlank()) return
         _navCommandFlow.tryEmit(
             NavCommand.Navigate(
-                destination = HomeScreenRoute,
+                destination = ProfileUpdateRoute,
             )
         )
     }

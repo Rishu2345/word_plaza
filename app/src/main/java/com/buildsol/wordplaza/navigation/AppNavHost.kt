@@ -23,6 +23,7 @@ import com.buildsol.wordplaza.viewModel.profileUpdateViewModel.ProfileUpdateView
 @Composable
 fun AppNavHost(
     navController: NavHostController,
+    startingScreen: GTCAppRoute = OnboardingScreenRoute,
     onSetAppUiState: (AppUiState) -> Unit,
     modifier: Modifier,
 ) {
@@ -32,7 +33,7 @@ fun AppNavHost(
 
     NavHost(
         navController = navController,
-        startDestination = OnboardingScreenRoute,
+        startDestination = startingScreen,
         modifier = modifier,
     ) {
         composable<OnboardingScreenRoute>{

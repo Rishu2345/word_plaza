@@ -6,6 +6,7 @@ data class UserProfile(
     val displayName: String = "",
     val email: String = "",
     val profilePictureUrl: String = "",
+    val avatarId:String = "",
     val bio: String = "",
     val followerCount: Int = 0,
     val followingCount: Int = 0,

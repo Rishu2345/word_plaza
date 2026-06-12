@@ -1,28 +1,23 @@
 package com.buildsol.wordplaza.viewModel.profileUpdateViewModel
 
-import android.content.Context
-import android.graphics.Bitmap
-import android.net.Uri
-import android.provider.ContactsContract
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.buildsol.wordplaza.firebase.firestore.FireStore
+import com.buildsol.wordplaza.images.Image
 import com.buildsol.wordplaza.navigation.HomeScreenRoute
 import com.buildsol.wordplaza.navigation.LoginScreenRoute
 import com.buildsol.wordplaza.navigation.NavCommand
-import com.buildsol.wordplaza.view.profileChange.ProfileImageProcessor
-import com.buildsol.wordplaza.view.profileChange.ProfileImageStorage
 import com.buildsol.wordplaza.view.profileChange.ProfileUpdateState
 import com.buildsol.wordplaza.viewModel.AppViewModel
 import com.google.android.gms.tasks.Task
+import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
+import com.google.firebase.auth.auth
 import com.timestampcamera.intalyx.db.DataStoreHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -32,11 +27,11 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 class ProfileUpdateViewModel(
-    private val auth: FirebaseAuth,
     private val fireStore: FireStore,
-    private val dataStoreHelper: DataStoreHelper,
     savedStateHandle: SavedStateHandle
 ) : AppViewModel(savedStateHandle = savedStateHandle) {
+
+    val auth = Firebase.auth
     private val _uiState = MutableStateFlow(ProfileUpdateState())
     val uiState: StateFlow<ProfileUpdateState> = _uiState.asStateFlow()
 
@@ -60,13 +55,12 @@ class ProfileUpdateViewModel(
 
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
-            val displayName = dataStoreHelper.getString(DataStoreKey.USER_NAME).first()
-            val profilePictureUrl = dataStoreHelper.getString(DataStoreKey.USER_IMAGE).first()
+
             _uiState.update {
                 it.copy(
                     isLoading = false,
-                    displayName = displayName,
-                    profilePictureUrl = profilePictureUrl,
+                    displayName = auth.currentUser?.displayName ?: "",
+                    profilePictureUrl = auth.currentUser?.photoUrl?.toString() ?: "",
 
                 )
             }
@@ -85,7 +79,7 @@ class ProfileUpdateViewModel(
     }
 
 
-    fun saveProfile(context: Context) {
+    fun saveProfile() {
         val currentState = _uiState.value
         val displayName = currentState.displayName.trim()
         val firebaseUser = auth.currentUser
@@ -112,9 +106,9 @@ class ProfileUpdateViewModel(
                 fireStore.updateUserProfile(
                     userId = firebaseUser.uid,
                     displayName = displayName,
-                    profilePictureUrl = imageUrl
+                    avatarId = currentState.selectedAvatarId?.name ?: ""
                 )
-                updateFirebaseAuthProfile(displayName, imageUrl)
+                updateFirebaseAuthProfile(displayName)
 
                 _uiState.update {
                     it.copy(
@@ -124,6 +118,7 @@ class ProfileUpdateViewModel(
                         successMessage = "Profile updated."
                     )
                 }
+                navigateToHomePage()
             } catch (exception: Exception) {
                 _uiState.update {
                     it.copy(
@@ -135,7 +130,7 @@ class ProfileUpdateViewModel(
         }
     }
 
-    private suspend fun updateFirebaseAuthProfile(displayName: String, profilePictureUrl: String) {
+    private suspend fun updateFirebaseAuthProfile(displayName: String) {
         val profileUpdates = UserProfileChangeRequest.Builder()
             .setDisplayName(displayName)
             .build()
@@ -171,6 +166,22 @@ class ProfileUpdateViewModel(
                 destination = HomeScreenRoute
             )
         )
+    }
+
+    fun onAvtarClicked(image: Image){
+        _uiState.update {
+            it.copy(
+                selectedAvatarId = image
+            )
+        }
+    }
+
+    fun toggleAvatarSheet(visibility:Boolean){
+        _uiState.update {
+            it.copy(
+                showAvtarSheet = visibility
+            )
+        }
     }
 
 

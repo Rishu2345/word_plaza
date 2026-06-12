@@ -1,14 +1,9 @@
 package com.buildsol.wordplaza.view.profileChange
 
-import android.graphics.Bitmap
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.DrawableRes
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,15 +25,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -47,27 +38,21 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.buildsol.wordplaza.R
 import com.buildsol.wordplaza.viewModel.profileUpdateViewModel.ProfileUpdateViewModel
-
+import com.buildsol.wordplaza.images.Image
+import com.buildsol.wordplaza.images.imagePainter
 
 
 @Composable
@@ -77,15 +62,17 @@ fun ProfileUpdate(
     val uiState by viewModel.uiState.collectAsState()
     ProfileUpdate(
         state = uiState,
-        onAvatarSelected = viewModel::onAvatarSelected,
+        onAvatarSelected = viewModel::onAvtarClicked,
+        toggleAvtarSheet = viewModel::toggleAvatarSheet,
         onDisplayNameChange = viewModel::onDisplayNameChange,
+        onSaveClick = viewModel::saveProfile,
     )
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileUpdate(
     state: ProfileUpdateState,
-    onAvatarSelected: (Int) -> Unit,
+    onAvatarSelected: (Image) -> Unit,
     toggleAvtarSheet: (Boolean) -> Unit,
     onDisplayNameChange: (String) -> Unit,
     onSaveClick: () -> Unit,
@@ -99,7 +86,7 @@ fun ProfileUpdate(
                 selectedAvatarId = state.selectedAvatarId,
                 avatars = state.avatars,
                 onAvatarSelected = { avatar ->
-                    onAvatarSelected(avatar.id)
+                    onAvatarSelected(avatar.imageRes)
                     toggleAvtarSheet(false)
                 }
             )
@@ -231,7 +218,7 @@ private fun EditableAvatar(
         ) {
             if(state.selectedAvatarId != null) {
                     Image(
-                        painter = painterResource(state.selectedAvatarId),
+                        painter = imagePainter(state.selectedAvatarId),
                         contentDescription = "Selected Avtar",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
@@ -270,7 +257,7 @@ private fun EditableAvatar(
 
 @Composable
 private fun ImageSourceSheet(
-    selectedAvatarId: Int?,
+    selectedAvatarId: Image?,
     avatars: List<Avatar>,
     onAvatarSelected: (Avatar) -> Unit
 ) {
@@ -300,7 +287,7 @@ private fun ImageSourceSheet(
                 key = { it.id }
             ) { avatar ->
 
-                val isSelected = avatar.id == selectedAvatarId
+                val isSelected = avatar.imageRes == selectedAvatarId
 
                 AvatarItem(
                     avatar = avatar,
@@ -329,7 +316,7 @@ private fun AvatarItem(
             contentAlignment = Alignment.BottomEnd
         ) {
             Image(
-                painter = painterResource(avatar.imageRes),
+                painter = imagePainter( avatar.imageRes),
                 contentDescription = avatar.title,
                 modifier = Modifier
                     .size(90.dp)
@@ -375,6 +362,6 @@ private fun AvatarItem(
 
 data class Avatar(
     val id: Int,
-    @DrawableRes val imageRes: Int,
+    val imageRes: Image,
     val title: String
 )

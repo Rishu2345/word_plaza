@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.net.Uri
 import androidx.compose.ui.res.painterResource
 import com.buildsol.wordplaza.R
+import com.buildsol.wordplaza.images.Image
 
 data class ProfileUpdateState(
     val isLoading: Boolean = true,
@@ -12,24 +13,24 @@ data class ProfileUpdateState(
     val profilePictureUrl: String = "",
     val errorMessage: String? = null,
     val successMessage: String? = null,
-    val selectedAvatarId: Int? = null,
+    val selectedAvatarId: Image? = null,
     val showAvtarSheet: Boolean = false,
 
 ) {
     val avatars = listOf(
         Avatar(
             id = 1,
-            imageRes = R.drawable.onboarding_first,
+            imageRes = Image.FIRST,
             title = "https://example.com/avatar1.jpg"
         ),
         Avatar(
             id = 3,
-            imageRes = R.drawable.onboarding_first,
+            imageRes = Image.SECOND,
             title = "https://example.com/avatar1.jpg"
         ),
         Avatar(
             id = 2,
-            imageRes = R.drawable.onboarding_first,
+            imageRes = Image.THREE,
             title = "https://example.com/avatar1.jpg"
         )
     )
