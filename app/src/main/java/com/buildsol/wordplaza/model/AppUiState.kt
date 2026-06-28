@@ -12,5 +12,6 @@ data class AppUiState(
     var scrollOffSet: Float = 0f,
     var currentRoute: GTCAppRoute = HomeScreenRoute,
     var onNavigate: (GTCAppRoute) -> Unit = {},
-    var isLoading : Boolean = false
+    var isLoading : Boolean = false,
+    var showPostBottomSheet:Boolean = false
 )

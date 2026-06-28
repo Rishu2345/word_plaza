@@ -5,7 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import org.example.notable.theme.scaledTypography
 
@@ -96,8 +96,8 @@ fun AppTheme(
         darkTheme -> DarkColors
         else -> LightColors
     }
-    val localWindowInfo = LocalWindowInfo.current
-    val screenWidth = localWindowInfo.containerSize.width.dp
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
 
     val scale = when {
         screenWidth < 600.dp -> 1f
