@@ -186,14 +186,3 @@ private fun GoogleSignInButton(
     }
 }
 
-@Preview(showBackground = true, widthDp = 390, heightDp = 844)
-@Composable
-private fun LoginScreenPreview() {
-    AppTheme {
-        LoginScreen(
-            isLoading = false,
-            errorMessage = null,
-            onSignInWithGoogle = {}
-        )
-    }
-}

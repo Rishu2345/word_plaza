@@ -32,7 +32,6 @@ fun AppNavigationBar(
     val items = listOf(
         NavItem(HomeScreenRoute, "Feed", Icons.Default.Home),
         NavItem(CreatePostRoute, "Add Word", Icons.AutoMirrored.Filled.NoteAdd),
-        NavItem(SearchScreenRoute, "Search", Icons.Default.Search),
         NavItem(ProfileScreenRoute, "Profile", Icons.Default.Person)
     )
 

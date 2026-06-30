@@ -39,18 +39,20 @@ class HomeScreenViewModel(
 
     fun refreshHome() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMassage = null) }
+            _uiState.update { it.copy(isLoading = true, errorMassage = null, refreshFeed = true) }
             try {
-                val wordOfTheDay = fireStore.getWordOfTheDay()
+//                val wordOfTheDay = fireStore.getWordOfTheDay()
                 val posts = fireStore.loadFeedPosts()
+                Log.e("Error", "the post is cleared")
                 val currentUserId = auth.currentUser?.uid.orEmpty()
                 val states = fireStore.getCurrentUserPostStates(currentUserId, posts.map { it.id })
+                Log.e("Error", "the states is cleared")
                 _uiState.update {
                     it.copy(
-                        wordOfTheDay = wordOfTheDay,
                         posts = posts,
                         postStates = states,
-                        isLoading = false
+                        isLoading = false,
+                        refreshFeed = false
                     )
                 }
             } catch (exception: Exception) {
@@ -58,6 +60,7 @@ class HomeScreenViewModel(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
+                        refreshFeed = false,
                         errorMassage = exception.message ?: "Unable to load feed."
                     )
                 }

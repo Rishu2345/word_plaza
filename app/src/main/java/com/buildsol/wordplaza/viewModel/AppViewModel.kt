@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 open class AppViewModel(
@@ -36,7 +37,7 @@ open class AppViewModel(
                 it.copy(currentRoute = route)
             }
             if(route == CreatePostRoute){
-                _appUiState.update{it.copy(showPostBottomSheet = true)}
+                _appUiState.update{it.copy(showPostBottomSheet = true, currentRoute = HomeScreenRoute)}
             }else{
                 _navCommandFlow.tryEmit(NavCommand.Navigate(route))
             }

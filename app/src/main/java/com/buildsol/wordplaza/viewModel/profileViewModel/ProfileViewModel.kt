@@ -25,7 +25,7 @@ class ProfileViewModel(
     init {
         _appUiState.update {
             it.copy(
-                hideTopBar = false,
+                hideTopBar = true,
                 hideBottomNavigation = false,
                 currentRoute = ProfileScreenRoute
             )

@@ -9,7 +9,7 @@ android {
     namespace = "com.buildsol.wordplaza"
     compileSdk {
         version = release(36) {
-            minorApiLevel = 1
+            minorApiLevel = 13
         }
     }
 
